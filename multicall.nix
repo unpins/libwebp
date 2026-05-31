@@ -1,8 +1,10 @@
 # libwebp ships six command-line tools — cwebp (encode), dwebp (decode),
 # gif2webp / img2webp (animation), webpinfo and webpmux (container). To honour
 # the unpins one-pkg-one-bin rule we post-link them into a single multicall
-# binary at $out/bin/cwebp; `lib.withAliases` then embeds the other five names
-# as an UNPIN_META block so unpin's installer recreates the argv[0] shims.
+# binary at $out/bin/libwebp (a busybox-style dispatcher named after the
+# package, as the unpins CI resolves result/bin/<package-name>); `lib.withAliases`
+# then embeds the six tool names as an UNPIN_META block so unpin's installer
+# recreates the argv[0] shims.
 #
 # Why a post-link route (no source patch): each tool is a separate CMake
 # executable, but the only object unique to a tool is its own examples/<tool>.c.o
@@ -129,10 +131,11 @@ let
         done
       done
 
-      # Dispatcher: basename(argv[0]) → <tool>_main. The canonical name (cwebp)
-      # and any unknown argv[0] fall through to a `cwebp <applet> …` form and
-      # finally to cwebp_main, so the bare binary stays callable and survives a
-      # rename (CI smoke copies it to smoke.exe).
+      # Dispatcher: basename(argv[0]) → <tool>_main. The canonical name
+      # (libwebp) and any unknown argv[0] fall through to a `<bin> <applet> …`
+      # form and finally to cwebp_main, so the bare `libwebp` dispatcher stays
+      # callable (its `-version` smoke reaches cwebp_main) and survives a rename
+      # (CI smoke copies it to smoke.exe).
       {
         echo '#include <string.h>'
         for t in $TOOLS; do echo "int ''${t}_main(int, char **);"; done
@@ -199,8 +202,11 @@ CBODY
     installPhase = ''
       runHook preInstall
       mkdir -p "$out/bin" "$out/share/man/man1"
-      install -m755 mc/cwebp "$out/bin/cwebp"
-      for a in dwebp gif2webp img2webp webpinfo webpmux; do ln -s cwebp "$out/bin/$a"; done
+      # Canonical binary is named after the package (libwebp), per the unpins
+      # convention — it's a busybox-style dispatcher. Each of the six tool
+      # names is a symlink; lib.withAliases turns them into argv[0] aliases.
+      install -m755 mc/cwebp "$out/bin/libwebp"
+      for a in cwebp dwebp gif2webp img2webp webpinfo webpmux; do ln -s libwebp "$out/bin/$a"; done
 
       # Man pages live in the source tree (man/<tool>.1); ship all six so the
       # set matches nixpkgs' libwebp man output (no winManRoot needed).
@@ -217,7 +223,7 @@ CBODY
 
   aliased = lib.withAliases pkgs
     {
-      primary = "cwebp";
+      primary = "libwebp";
       aliasesFromSymlinksIn = "bin";
     }
     multicall;
@@ -225,7 +231,7 @@ in
 if isWindows
 then aliased.overrideAttrs (o: {
   postFixup = (o.postFixup or "") + ''
-    [ -f "$out/bin/cwebp" ] && mv "$out/bin/cwebp" "$out/bin/cwebp.exe"
+    [ -f "$out/bin/libwebp" ] && mv "$out/bin/libwebp" "$out/bin/libwebp.exe"
   '';
 })
 else aliased

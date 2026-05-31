@@ -9,15 +9,17 @@
   inputs.unpins-lib.url = "github:unpins/nix-lib";
 
   # libwebp installs six CLIs (cwebp, dwebp, gif2webp, img2webp, webpinfo,
-  # webpmux); ./multicall.nix post-links them into one `cwebp` binary with the
-  # other five as argv[0]-dispatch UNPIN_META aliases. Windows goes through
-  # mingw — libwebp is portable CMake C that cross-compiles cleanly (like
-  # brotli), and on Windows the tools use native Win32 threads, so no
-  # pthread/winpthread runtime is dragged in.
+  # webpmux); ./multicall.nix post-links them into one `libwebp` dispatcher
+  # binary with all six tool names as argv[0]-dispatch UNPIN_META aliases.
+  # Windows goes through mingw — libwebp is portable CMake C that cross-compiles
+  # cleanly (like brotli), and on Windows the tools use native Win32 threads, so
+  # no pthread/winpthread runtime is dragged in.
   #
-  # `cwebp` is the canonical binary because it is the flagship tool and matches
-  # a real upstream man page, so the shipped man set (all six pages) equals
-  # nixpkgs' libwebp man output and no winManRoot curation is needed.
+  # The canonical binary is named `libwebp` (= the package name) per the unpins
+  # convention — the CI portability/smoke checks resolve `result/bin/<name>`, so
+  # the dispatcher must carry the package name; the six tools are its aliases.
+  # All six upstream man pages ship, matching nixpkgs' libwebp man output (no
+  # winManRoot curation needed).
   outputs = { self, unpins-lib }:
     let
       ulib = unpins-lib.lib;
@@ -36,8 +38,9 @@
     ulib.mkStandaloneFlake {
       inherit self;
       name = "libwebp";
-      binName = "cwebp";
-      # `cwebp -version` prints the libwebp / libsharpyuv versions and exits 0.
+      # Canonical binary == package name (libwebp); see header. `libwebp
+      # -version` reaches cwebp's main via the dispatcher fall-through and
+      # prints the libwebp / libsharpyuv versions, exiting 0.
       smoke = [ "-version" ];
       smokePattern = "1\\.6";
       build = pkgs:
