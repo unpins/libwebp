@@ -1,7 +1,7 @@
 # libwebp
 
 Standalone build of the [libwebp](https://chromium.googlesource.com/webm/libwebp)
-command-line tools — Google's WebP image format encoder, decoder and utilities.
+command-line programs — Google's WebP image format encoder, decoder and supporting programs.
 
 [![CI](https://github.com/unpins/libwebp/actions/workflows/libwebp.yml/badge.svg)](https://github.com/unpins/libwebp/actions)
 ![Linux](https://img.shields.io/badge/Linux-✓-success?logo=linux&logoColor=white)
@@ -28,8 +28,6 @@ unpin install libwebp
 `unpin install libwebp` creates the `cwebp`, `dwebp`, `gif2webp`, `img2webp`, `webpinfo`, and `webpmux` commands.
 
 ## Programs
-
-One binary provides all six libwebp CLIs:
 
 | command    | what it does                          |
 | ---------- | ------------------------------------- |
