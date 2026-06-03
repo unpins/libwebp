@@ -10,19 +10,6 @@ command-line tools — Google's WebP image format encoder, decoder and utilities
 
 Part of the [unpins](https://unpins.org) project — native single-binary builds with no third-party runtime dependencies.
 
-## Tools
-
-One binary provides all six libwebp CLIs:
-
-| command    | what it does                          |
-| ---------- | ------------------------------------- |
-| `cwebp`    | encode PNG/JPEG → WebP                 |
-| `dwebp`    | decode WebP → PNG/PNM                  |
-| `gif2webp` | convert an (animated) GIF to WebP      |
-| `img2webp` | build an animated WebP from frames     |
-| `webpinfo` | print a WebP file's structure          |
-| `webpmux`  | assemble / inspect WebP containers     |
-
 ## Usage
 
 Run a program with [unpin](https://github.com/unpins/unpin):
@@ -39,6 +26,19 @@ unpin install libwebp
 ```
 
 `unpin install libwebp` creates the `cwebp`, `dwebp`, `gif2webp`, `img2webp`, `webpinfo`, and `webpmux` commands.
+
+## Programs
+
+One binary provides all six libwebp CLIs:
+
+| command    | what it does                          |
+| ---------- | ------------------------------------- |
+| `cwebp`    | encode PNG/JPEG → WebP                 |
+| `dwebp`    | decode WebP → PNG/PNM                  |
+| `gif2webp` | convert an (animated) GIF to WebP      |
+| `img2webp` | build an animated WebP from frames     |
+| `webpinfo` | print a WebP file's structure          |
+| `webpmux`  | assemble / inspect WebP containers     |
 
 ## Build locally
 
