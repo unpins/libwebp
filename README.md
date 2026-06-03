@@ -23,19 +23,22 @@ One binary provides all six libwebp CLIs:
 | `webpinfo` | print a WebP file's structure          |
 | `webpmux`  | assemble / inspect WebP containers     |
 
-## Installation
+## Usage
 
-Install with [unpin](https://github.com/unpins/unpin):
-
-```bash
-unpin libwebp
-```
-
-Or run without installing:
+Run a program with [unpin](https://github.com/unpins/unpin):
 
 ```bash
-unpin run libwebp cwebp in.png -o out.webp
+unpin libwebp cwebp in.png -o out.webp
+unpin libwebp dwebp in.webp -o out.png
 ```
+
+To install the programs onto your PATH:
+
+```bash
+unpin install libwebp
+```
+
+`unpin install libwebp` creates the `cwebp`, `dwebp`, `gif2webp`, `img2webp`, `webpinfo`, and `webpmux` commands.
 
 ## Build locally
 
