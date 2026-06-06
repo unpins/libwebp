@@ -25,18 +25,7 @@ To install the programs onto your PATH:
 unpin install libwebp
 ```
 
-`unpin install libwebp` creates the `cwebp`, `dwebp`, `gif2webp`, `img2webp`, `webpinfo`, and `webpmux` commands.
-
-## Programs
-
-| command    | what it does                          |
-| ---------- | ------------------------------------- |
-| `cwebp`    | encode PNG/JPEG → WebP                 |
-| `dwebp`    | decode WebP → PNG/PNM                  |
-| `gif2webp` | convert an (animated) GIF to WebP      |
-| `img2webp` | build an animated WebP from frames     |
-| `webpinfo` | print a WebP file's structure          |
-| `webpmux`  | assemble / inspect WebP containers     |
+`unpin install libwebp` also creates the commands `cwebp` (encode), `dwebp` (decode), `gif2webp` (convert a GIF), `img2webp` (animate frames), `webpinfo` (inspect) and `webpmux` (assemble containers).
 
 ## Build locally
 
