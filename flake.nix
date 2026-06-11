@@ -1,5 +1,5 @@
 {
-  description = "Standalone build of the libwebp tools";
+  description = "the libwebp tools (cwebp, dwebp, gif2webp, img2webp, webpinfo, webpmux) as a single self-contained binary";
 
   nixConfig = {
     extra-substituters = [ "https://unpins.cachix.org" ];
