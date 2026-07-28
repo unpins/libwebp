@@ -144,7 +144,10 @@ let
         [ -n "$a" ] || continue
         printf '%s\t%s\n' "$a" "$(printf '%s' "$a" | tr -c 'A-Za-z0-9_' '_')"
       done < multicall/apps.list > multicall/applets.list
-${lib.multicallTableDispatcherC { name = "libwebp"; defaultApplet = "cwebp"; }}
+      # `windows`: WEBP_UNICODE is on for WIN32, so every tool opens with
+      # INIT_WARGV — CommandLineToArgvW plus a `wargc == argc` assertion the
+      # dispatcher's shifted argv would fail. The rewrite keeps both in step.
+${lib.multicallTableDispatcherC { name = "libwebp"; defaultApplet = "cwebp"; windows = isWindows; }}
       $CC -O2 -c -o multicall/dispatcher.o multicall/dispatcher.c
 
       # Final link: shared archives + image-codec libs, once. On GNU-ld targets
