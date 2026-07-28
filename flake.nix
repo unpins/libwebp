@@ -23,24 +23,6 @@
   outputs = { self, unpins-lib }:
     let
       ulib = unpins-lib.lib;
-      # cwebp links libjpeg-turbo for JPEG input. On riscv64 the vanilla
-      # libjpeg-turbo fails to build (its RVV SIMD coverage helper references
-      # jsimd_can_* symbols the new RVV port never defines); apply the shared
-      # nix-lib fix, gated to riscv so other arches keep the cached build. Same
-      # one chafa/heif/avif use.
-      # On non-riscv, return scope.libwebp DIRECTLY (no `.extend`): the engine
-      # path overrides scope.pkgsStatic.libwebp's stdenv via a plain `//` merge,
-      # and re-deriving libwebp from an extended scope would discard that override
-      # (the engine stdenv) — the link-capture sidecars the self-fold reads would
-      # never be written. Only riscv needs the overlay (its libjpeg fix), and the
-      # engine path isn't exercised there in a way that conflicts.
-      withWebp = scope:
-        let host = scope.stdenv.hostPlatform; in
-        if host.isRiscV
-        then (scope.extend (final: prev: {
-          libjpeg = ulib.nativeFixes."libjpeg-turbo" prev;
-        })).libwebp
-        else scope.libwebp;
     in
     ulib.mkStandaloneFlake {
       inherit self;
@@ -51,12 +33,14 @@
       smoke = [ "-version" ];
       smokePattern = "1\\.6";
 
-      # Build via the unpin-llvm engine + emit a bitcode multicall module. On
-      # Linux the engine compiles libwebp (apps on by default) to bitcode and the
-      # standalone self-folds the six CLIs into one `libwebp` binary; darwin (no
-      # engine) keeps the objcopy fold in ./multicall.nix; windows via
-      # windowsBuild. Pure C — no requires.cxx. The bare `libwebp -version` smoke
-      # falls through to cwebp, so defaultProgram pins it.
+      # Build via the unpin-llvm engine + emit a bitcode multicall module: the
+      # engine compiles libwebp (apps on by default) to bitcode and the standalone
+      # self-folds the six CLIs into one `libwebp` binary, on Linux and darwin
+      # alike. Windows (mingw, no engine → native objects) goes through
+      # windowsBuild's objcopy fold instead — objcopy cannot rewrite bitcode, so
+      # ./multicall.nix must NOT run over an engine build. Pure C — no
+      # requires.cxx. The bare `libwebp -version` smoke falls through to cwebp, so
+      # defaultProgram pins it.
       engine = "unpin-llvm";
       multicall = {
         defaultProgram = "cwebp";
@@ -69,13 +53,9 @@
           { name = "webpmux"; }
         ];
       };
-      build = pkgs:
-        if pkgs.stdenv.hostPlatform.isLinux
-        then withWebp pkgs.pkgsStatic        # engine path: apps → bitcode → selfFold
-        else import ./multicall.nix { lib = pkgs.lib // ulib; }
-          { inherit pkgs; webp = withWebp pkgs.pkgsStatic; };
+      build = pkgs: pkgs.pkgsStatic.libwebp;   # engine: apps → bitcode → selfFold
       windowsBuild = pkgs:
         import ./multicall.nix { lib = pkgs.lib // ulib; }
-          { inherit pkgs; webp = withWebp (ulib.mingwStaticCross pkgs); };
+          { inherit pkgs; webp = (ulib.mingwStaticCross pkgs).libwebp; };
     };
 }
