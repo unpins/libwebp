@@ -30,7 +30,7 @@
       # Canonical binary == package name (libwebp); see header. `libwebp
       # -version` reaches cwebp's main via the dispatcher fall-through and
       # prints the libwebp / libsharpyuv versions, exiting 0.
-      smoke = [ "-version" ];
+      smoke = [ "--unpin-program=cwebp" "-version" ];
       smokePattern = "1\\.6";
 
       # Build via the unpin-llvm engine + emit a bitcode multicall module: the
@@ -39,11 +39,9 @@
       # alike. Windows (mingw, no engine → native objects) goes through
       # windowsBuild's objcopy fold instead — objcopy cannot rewrite bitcode, so
       # ./multicall.nix must NOT run over an engine build. Pure C — no
-      # requires.cxx. The bare `libwebp -version` smoke falls through to cwebp, so
-      # defaultProgram pins it.
+      # requires.cxx.
       engine = "unpin-llvm";
       multicall = {
-        defaultProgram = "cwebp";
         programs = [
           { name = "cwebp"; }
           { name = "dwebp"; }

@@ -133,9 +133,8 @@ let
 
       # Dispatcher (shared canonical generator — see nix-lib
       # lib.multicallTableDispatcherC). The applet list comes from multicall/apps.list
-      # ($TOOLS); a bare/unknown invocation runs cwebp (defaultApplet), so the
-      # `libwebp -version` smoke reaches cwebp_main and a renamed copy (CI's
-      # smoke.exe) still dispatches.
+      # ($TOOLS). `libwebp` is not one of the programs, so a bare/unknown
+      # invocation lists them; the smoke selects one with --unpin-program=.
       mkdir -p multicall
       printf '%s\n' $TOOLS > multicall/apps.list
       # The generator reads a TSV `<applet>\t<fn-base>` and calls `<fn-base>_main`;
@@ -147,7 +146,7 @@ let
       # `windows`: WEBP_UNICODE is on for WIN32, so every tool opens with
       # INIT_WARGV — CommandLineToArgvW plus a `wargc == argc` assertion the
       # dispatcher's shifted argv would fail. The rewrite keeps both in step.
-${lib.multicallTableDispatcherC { name = "libwebp"; defaultApplet = "cwebp"; windows = isWindows; }}
+${lib.multicallTableDispatcherC { name = "libwebp"; windows = isWindows; }}
       $CC -O2 -c -o multicall/dispatcher.o multicall/dispatcher.c
 
       # Final link: shared archives + image-codec libs, once. On GNU-ld targets
