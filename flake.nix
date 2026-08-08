@@ -9,8 +9,8 @@
   inputs.unpins-lib.url = "github:unpins/nix-lib";
 
   # libwebp installs six CLIs (cwebp, dwebp, gif2webp, img2webp, webpinfo,
-  # webpmux); ./multicall.nix post-links them into one `libwebp` dispatcher
-  # binary with all six tool names as argv[0]-dispatch UNPIN_META aliases.
+  # webpmux); nix-lib folds them into one `libwebp` dispatcher binary with all
+  # six tool names as argv[0]-dispatch UNPIN_META aliases.
   # Windows goes through mingw — libwebp is portable CMake C that cross-compiles
   # cleanly (like brotli), and on Windows the tools use native Win32 threads, so
   # no pthread/winpthread runtime is dragged in.
@@ -34,14 +34,12 @@
       smokePattern = "1\\.6";
 
       # Build via the unpin-llvm engine + emit a bitcode multicall module: the
-      # engine compiles libwebp (apps on by default) to bitcode and the standalone
-      # self-folds the six CLIs into one `libwebp` binary, on Linux and darwin
-      # alike. Windows (mingw, no engine → native objects) goes through
-      # windowsBuild's objcopy fold instead — objcopy cannot rewrite bitcode, so
-      # ./multicall.nix must NOT run over an engine build. Pure C — no
-      # requires.cxx.
+      # engine compiles libwebp (apps on by default) to bitcode and the
+      # standalone self-folds the six CLIs into one `libwebp` binary on every
+      # target, windows included. Pure C — no requires.cxx.
       engine = "unpin-llvm";
       multicall = {
+        windows = true;
         programs = [
           { name = "cwebp"; }
           { name = "dwebp"; }
@@ -52,8 +50,6 @@
         ];
       };
       build = pkgs: pkgs.pkgsStatic.libwebp;   # engine: apps → bitcode → selfFold
-      windowsBuild = pkgs:
-        import ./multicall.nix { lib = pkgs.lib // ulib; }
-          { inherit pkgs; webp = (ulib.mingwStaticCross pkgs).libwebp; };
+      windowsBuild = pkgs: (ulib.mingwStaticCross pkgs).libwebp;
     };
 }
