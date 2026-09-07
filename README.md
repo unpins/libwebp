@@ -9,28 +9,44 @@ The [libwebp](https://chromium.googlesource.com/webm/libwebp) command-line progr
 
 Part of the [unpins](https://unpins.org) catalog; install it with [`unpin`](https://github.com/unpins/unpin): `unpin install libwebp`.
 
+Encode, decode and inspect WebP images.
+
 ## Usage
 
 Run a program with [unpin](https://github.com/unpins/unpin):
 
 ```bash
-unpin libwebp cwebp in.png -o out.webp
-unpin libwebp dwebp in.webp -o out.png
+unpin libwebp --unpin-program=cwebp in.png -o out.webp
+unpin libwebp --unpin-program=dwebp in.webp -o out.png
 ```
 
-To install the programs onto your PATH:
+Or install them and call each by name, which is usually what you want:
 
 ```bash
 unpin install libwebp
+cwebp in.png -o out.webp
 ```
 
-`unpin install libwebp` also creates the commands `cwebp` (encode), `dwebp` (decode), `gif2webp` (convert a GIF), `img2webp` (animate frames), `webpinfo` (inspect) and `webpmux` (assemble containers).
+`unpin install libwebp` creates all six commands.
+
+## Programs
+
+| program | what it does |
+|---|---|
+| `cwebp` | encode a PNG, JPEG, TIFF or PNM image to WebP |
+| `dwebp` | decode a WebP image to PNG, PAM, PPM, PGM, BMP, TIFF or raw YUV |
+| `gif2webp` | convert a GIF, animation included, to an animated WebP |
+| `img2webp` | build an animated WebP from a sequence of still images |
+| `webpinfo` | print the chunk structure of a WebP file |
+| `webpmux` | assemble, split and edit WebP containers and their metadata |
+
+Each prints its version with `-version` and its options with `-h`, one dash.
 
 ## Build locally
 
 ```bash
 nix build github:unpins/libwebp
-./result/bin/cwebp -version
+./result/bin/libwebp --unpin-program=cwebp -version
 ```
 
 Or run directly:
@@ -47,16 +63,20 @@ The [Releases](https://github.com/unpins/libwebp/releases) page has standalone b
 
 ## Build notes
 
-- One multicall binary holds all six tools. Each tool's only unique object is
-  its own `examples/<tool>.c.o`; everything else (libwebp / libwebpmux /
-  libwebpdemux / libsharpyuv plus the png/jpeg/gif/zlib codecs) is a shared
-  static archive linked once, so the binary carries a single copy of libwebp.
-  `cwebp` is the canonical name; the others dispatch on `argv[0]`.
-- The tools are folded together with the post-link `ld -r` + `objcopy
-  --redefine-sym` recipe (rename each tool's `main` → `<tool>_main`), with the
-  exact archive/codec link list read from CMake's per-tool `link.txt`.
+- One binary holds all six tools. Each tool's only unique object is its own
+  `examples/<tool>.c.o`; everything else — libwebp, libwebpmux, libwebpdemux
+  and libsharpyuv, plus the png/jpeg/tiff/gif/zlib codecs — is linked once, so
+  the binary carries a single copy of libwebp. The binary is named `libwebp`
+  and each tool answers to its own name.
+- TIFF input is compiled in on Linux and macOS. Upstream turns it off for
+  every static build, and that left `cwebp` unable to read a file `dwebp
+  -tiff` had just written; the build here supplies libtiff's own compression
+  libraries so the format works as it does in the distro packages. It is what
+  the extra size buys.
 - **Windows** is built with mingw: libwebp is portable CMake C and
   cross-compiles cleanly. The tools use native Win32 threads, so the `.exe`
-  drags no pthread/winpthread runtime.
-- PNG and JPEG input/output are linked in; GIF support (`gif2webp`) uses
-  giflib. All codecs are static — there are no sidecar DLLs or shared objects.
+  drags no pthread/winpthread runtime. Image input there goes through the
+  Windows Imaging Component, which already reads TIFF — so libtiff is not
+  linked in — but knows nothing of PNM, which is routed to the reader built
+  in alongside it.
+- All codecs are static — there are no sidecar DLLs or shared objects.
