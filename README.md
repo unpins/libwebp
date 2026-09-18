@@ -73,10 +73,7 @@ The [Releases](https://github.com/unpins/libwebp/releases) page has standalone b
   -tiff` had just written; the build here supplies libtiff's own compression
   libraries so the format works as it does in the distro packages. It is what
   the extra size buys.
-- **Windows** is built with mingw: libwebp is portable CMake C and
-  cross-compiles cleanly. The tools use native Win32 threads, so the `.exe`
-  drags no pthread/winpthread runtime. Image input there goes through the
-  Windows Imaging Component, which already reads TIFF — so libtiff is not
-  linked in — but knows nothing of PNM, which is routed to the reader built
-  in alongside it.
+- **Windows** is built with mingw. Image input there goes through the
+  Windows Imaging Component, which already reads TIFF but knows nothing of
+  PNM, which is routed to the reader built in alongside it.
 - All codecs are static — there are no sidecar DLLs or shared objects.
