@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [1.6.0-2] - 2026-09-26
+
 ### Fixed
 
 - On Linux and macOS, `cwebp` could not read TIFF files, including the ones
