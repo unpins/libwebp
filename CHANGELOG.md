@@ -23,7 +23,7 @@
   now shown alongside it. The `nix build` example pointed at `result/bin/cwebp`,
   which does not exist either; the binary is `result/bin/libwebp`.
 
-## [v1.6.0-1] - 2026-06-06
+## [1.6.0-1] - 2026-06-06
 
 First release: `cwebp`, `dwebp`, `gif2webp`, `img2webp`, `webpinfo` and
 `webpmux` in one binary, for Linux, macOS and Windows.
