@@ -1,0 +1,32 @@
+cmake: read TIFF in static builds, with libtiff's codecs on the link line.
+
+Upstream turns TIFF input off for every static build: one blanket `continue()`
+here, whose comment says only "it is failing on Ubuntu". The Ubuntu failure is
+libtiff's transitive libraries going missing from the link line, so supply
+them: when TIFF is found, append the codecs libtiff.a calls into (deflate, lzma,
+zstd, z). The flake also sets CMAKE_DISABLE_FIND_PACKAGE_Tiff, so CMake's
+FindTIFF skips libtiff's config file (whose imported targets nothing creates)
+and finds the archive on its own. libtiff's WebP codec resolves against the
+libwebp objects already in the link.
+
+--- a/cmake/deps.cmake
++++ b/cmake/deps.cmake
+@@ -77,7 +77,7 @@
+ if(WEBP_FIND_IMG_LIBS)
+   foreach(I_LIB PNG JPEG TIFF)
+     # Disable tiff when compiling in static mode as it is failing on Ubuntu.
+-    if(WEBP_LINK_STATIC AND ${I_LIB} STREQUAL "TIFF")
++    if(FALSE)
+       message(STATUS "TIFF is disabled when statically linking.")
+       continue()
+     endif()
+@@ -89,6 +89,9 @@
+            ${${I_LIB}_INCLUDE_DIRS})
+     endif()
+   endforeach()
++  if(WEBP_HAVE_TIFF)
++    list(APPEND WEBP_DEP_IMG_LIBRARIES deflate lzma zstd z)
++  endif()
+   if(WEBP_DEP_IMG_INCLUDE_DIRS)
+     list(REMOVE_DUPLICATES WEBP_DEP_IMG_INCLUDE_DIRS)
+   endif()

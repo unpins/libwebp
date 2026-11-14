@@ -24,72 +24,20 @@
     let
       ulib = unpins-lib.lib;
 
-      # Upstream turns TIFF input off for every static build — one blanket
-      # `continue()` in cmake/deps.cmake, whose comment says only "it is
-      # failing on Ubuntu". Every target we ship is static, so cwebp lost an
-      # input format that the distro builds of this same 1.6.0 all read.
-      #
-      # The Ubuntu failure is libtiff's transitive libraries going missing from
-      # the link line, and that is exactly what has to be supplied here: the
-      # imported targets nixpkgs' TiffConfig.cmake names (Deflate::Deflate and
-      # friends) are never created by anything, so config mode cannot be used
-      # at all. CMake's own FindTIFF delegates to it first, under the name
-      # `Tiff` and not `TIFF`, so that is the search to disable; FindTIFF then
-      # falls back to looking for the archive on its own, and the codecs
-      # libtiff.a calls into are appended by hand. Its WebP codec resolves
-      # against the libwebp objects already in this link, so the binary never
-      # carries a second copy of the library it is built from.
+      # TIFF input in static builds, which upstream turns off; the patch header
+      # has the why. FindTIFF must not take libtiff's config file (its imported
+      # targets are never created), hence the disabled `Tiff` package search.
       withTiff = pkgs: drv: drv.overrideAttrs (old: {
         buildInputs = (old.buildInputs or [ ]) ++ (with pkgs; [ libdeflate xz zstd zlib ]);
         cmakeFlags = (old.cmakeFlags or [ ]) ++ [ "-DCMAKE_DISABLE_FIND_PACKAGE_Tiff=ON" ];
-        postPatch = (old.postPatch or "") + ''
-          substituteInPlace cmake/deps.cmake \
-            --replace-fail 'if(WEBP_LINK_STATIC AND ''${I_LIB} STREQUAL "TIFF")' \
-              'if(FALSE)' \
-            --replace-fail 'if(WEBP_DEP_IMG_INCLUDE_DIRS)' \
-              'if(WEBP_HAVE_TIFF)
-    list(APPEND WEBP_DEP_IMG_LIBRARIES deflate lzma zstd z)
-  endif()
-  if(WEBP_DEP_IMG_INCLUDE_DIRS)'
-        '';
+        patches = (old.patches or [ ]) ++ [ ./patches/static-tiff.patch ];
       });
 
-      # cwebp on Windows never reaches the readers it was built with. Its
-      # ReadPicture there tries WIC and, failing that, only ReadWebP — so the
-      # PNM family, which WIC does not know, cannot be read at all, while
-      # -longhelp goes on listing it because that list is built from the
-      # libraries that were linked. Our own `dwebp -pam`/`-ppm`/`-pgm` output
-      # is precisely what could not be fed back in.
-      #
-      # PNM has a signature, so route just that one family to the built-in
-      # reader and leave everything else exactly as it was: WIC still gets
-      # every format it knows, and the WebP fallback still follows it. Testing
-      # the signature first also keeps WIC from printing a failure for a file
-      # it was never going to read.
-      #
-      # TIFF stays out of the Windows link for the same reason: WIC already
+      # cwebp on Windows reads PNM again (WIC has no PNM decoder); the patch
+      # header has the why. TIFF stays out of the Windows link: WIC already
       # reads it there, so libtiff would only be shadowed, at ~0.8 MB.
       withWinPnm = drv: drv.overrideAttrs (old: {
-        postPatch = (old.postPatch or "") + ''
-          substituteInPlace examples/cwebp.c \
-            --replace-fail '    // If no size specified, try to decode it using WIC.
-              ok = ReadPictureWithWIC(filename, pic, keep_alpha, metadata);
-              if (!ok) {
-                ok = ImgIoUtilReadFile(filename, &data, &data_size);
-                ok = ok && ReadWebP(data, data_size, pic, keep_alpha, metadata);
-              }' \
-              '    ok = ImgIoUtilReadFile(filename, &data, &data_size);
-              if (ok && WebPGuessImageType(data, data_size) == WEBP_PNM_FORMAT) {
-                // WIC has no PNM decoder; the one linked in here does.
-                ok = WebPGuessImageReader(data, data_size)(data, data_size, pic,
-                                                           keep_alpha, metadata);
-              } else {
-                // If no size specified, try to decode it using WIC.
-                ok = ReadPictureWithWIC(filename, pic, keep_alpha, metadata);
-                ok = ok || (data != NULL &&
-                            ReadWebP(data, data_size, pic, keep_alpha, metadata));
-              }'
-        '';
+        patches = (old.patches or [ ]) ++ [ ./patches/windows-cwebp-pnm.patch ];
       });
 
       # 24x16 RGBA gradient, half of it translucent, gzipped so the constant

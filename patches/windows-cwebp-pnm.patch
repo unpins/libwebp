@@ -1,0 +1,36 @@
+cwebp: read PNM on Windows.
+
+cwebp on Windows never reaches the readers it was built with. Its ReadPicture
+there tries WIC and, failing that, only ReadWebP, so the PNM family, which WIC
+does not know, cannot be read at all, while -longhelp goes on listing it. Our
+own `dwebp -pam`/`-ppm`/`-pgm` output could not be fed back in.
+
+PNM has a signature, so route just that family to the built-in reader and leave
+everything else as it was: WIC still gets every format it knows, and the WebP
+fallback still follows it. Testing the signature first also keeps WIC from
+printing a failure for a file it was never going to read.
+
+--- a/examples/cwebp.c
++++ b/examples/cwebp.c
+@@ -86,11 +86,16 @@
+     ok = ImgIoUtilReadFile(filename, &data, &data_size);
+     ok = ok && ReadYUV(data, data_size, pic);
+   } else {
+-    // If no size specified, try to decode it using WIC.
+-    ok = ReadPictureWithWIC(filename, pic, keep_alpha, metadata);
+-    if (!ok) {
+-      ok = ImgIoUtilReadFile(filename, &data, &data_size);
+-      ok = ok && ReadWebP(data, data_size, pic, keep_alpha, metadata);
++    ok = ImgIoUtilReadFile(filename, &data, &data_size);
++    if (ok && WebPGuessImageType(data, data_size) == WEBP_PNM_FORMAT) {
++      // WIC has no PNM decoder; the one linked in here does.
++      ok = WebPGuessImageReader(data, data_size)(data, data_size, pic,
++                                                 keep_alpha, metadata);
++    } else {
++      // If no size specified, try to decode it using WIC.
++      ok = ReadPictureWithWIC(filename, pic, keep_alpha, metadata);
++      ok = ok || (data != NULL &&
++                  ReadWebP(data, data_size, pic, keep_alpha, metadata));
+     }
+   }
+   if (!ok) {
