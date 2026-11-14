@@ -63,7 +63,7 @@ The [Releases](https://github.com/unpins/libwebp/releases) page has standalone b
 
 ## Build notes
 
-- One binary holds all six tools. Each tool's only unique object is its own
+- One binary holds all six programs. Each program's only unique object is its own
   `examples/<tool>.c.o`; everything else — libwebp, libwebpmux, libwebpdemux
   and libsharpyuv, plus the png/jpeg/tiff/gif/zlib codecs — is linked once, so
   the binary carries a single copy of libwebp. The binary is named `libwebp`
