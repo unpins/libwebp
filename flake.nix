@@ -137,6 +137,7 @@
         ];
       };
       build = pkgs: withRoundTrip pkgs (withTiff pkgs.pkgsStatic pkgs.pkgsStatic.libwebp);  # engine: apps → bitcode → selfFold
-      windowsBuild = pkgs: withWinPnm (ulib.mingwStaticCross pkgs).libwebp;
+      windowsBuild = pkgs:
+        withWinPnm ((ulib.mingwStaticCross pkgs).libwebp.override { tiffSupport = false; });
     };
 }
