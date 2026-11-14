@@ -42,6 +42,10 @@ cwebp in.png -o out.webp
 
 Each prints its version with `-version` and its options with `-h`, one dash.
 
+## Man pages
+
+Each program's man page is embedded — read one with `unpin man libwebp <program>`, e.g. `unpin man libwebp cwebp`.
+
 ## Build locally
 
 ```bash
@@ -64,10 +68,10 @@ The [Releases](https://github.com/unpins/libwebp/releases) page has standalone b
 ## Build notes
 
 - One binary holds all six programs. Each program's only unique object is its own
-  `examples/<tool>.c.o`; everything else — libwebp, libwebpmux, libwebpdemux
+  `examples/<program>.c.o`; everything else — libwebp, libwebpmux, libwebpdemux
   and libsharpyuv, plus the png/jpeg/tiff/gif/zlib codecs — is linked once, so
   the binary carries a single copy of libwebp. The binary is named `libwebp`
-  and each tool answers to its own name.
+  and each program answers to its own name.
 - TIFF input is compiled in on Linux and macOS. Upstream turns it off for
   every static build, and that left `cwebp` unable to read a file `dwebp
   -tiff` had just written; the build here supplies libtiff's own compression
@@ -76,4 +80,3 @@ The [Releases](https://github.com/unpins/libwebp/releases) page has standalone b
 - **Windows** is built with mingw. Image input there goes through the
   Windows Imaging Component, which already reads TIFF but knows nothing of
   PNM, which is routed to the reader built in alongside it.
-- All codecs are static — there are no sidecar DLLs or shared objects.
